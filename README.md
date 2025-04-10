@@ -1,73 +1,118 @@
-# Welcome to your Lovable project
+# Solar Insight Explorer
 
-## Project info
+A comprehensive web application that helps users analyze solar proposals and utility bills to provide detailed insights into solar energy production, cost savings, and incentives.
 
-**URL**: https://lovable.dev/projects/cd411791-eb91-4ac1-98be-f29a49a9eca9
+## Overview
 
-## How can I edit this code?
+Solar Insight Explorer is a full-stack application designed to simplify the process of evaluating solar energy proposals. It extracts key data from solar sales proposals and utility bills, calculates potential savings, and provides detailed analytics on solar production, financial benefits, and available incentives.
 
-There are several ways of editing your application.
+## Features
 
-**Use Lovable**
+### Document Analysis
+- **Solar Proposal Parsing**: Automatically extracts key information from PDF solar proposals including system size, panel details, production estimates, and pricing
+- **Utility Bill Processing**: Parses utility bills to determine current energy usage and costs
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/cd411791-eb91-4ac1-98be-f29a49a9eca9) and start prompting.
+### Data Analysis
+- **Solar Production Estimates**: Integrates with the PVWatts API to calculate accurate solar production estimates based on system specifications and location
+- **Solar Potential Assessment**: Uses Google Sunroof API to determine the solar potential for specific roof configurations
+- **SREC and Incentive Calculation**: Estimates Solar Renewable Energy Credits (SRECs) and other available incentives based on location
 
-Changes made via Lovable will be committed automatically to this repo.
+### User Management
+- **Authentication**: Secure user registration and login system
+- **Profile Management**: Users can manage their location and other profile details
 
-**Use your preferred IDE**
+### Results and Reporting
+- **Comprehensive Analysis**: Combines data from proposals, utility bills, and external APIs to generate detailed reports
+- **Savings Visualization**: Monthly breakdown of projected energy production, consumption, and savings
+- **Financial Metrics**: Calculates payback period, ROI, and long-term savings
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+## Tech Stack
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+### Backend
+- **Node.js** with **Express.js** framework
+- **MongoDB** for database storage
+- **JWT** for authentication
+- **Multer** for file uploads
+- **PDF-Parse** for extracting text from PDFs
+- **Tesseract.js** for OCR processing of utility bills
+- **Winston** for logging
 
-Follow these steps:
+### APIs
+- **PVWatts API**: For solar production estimates
+- **Google Sunroof API**: For roof solar potential assessment
+- **SREC Trade API**: For SREC pricing and incentive information
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+## Getting Started
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+### Prerequisites
+- Node.js (v14 or higher)
+- MongoDB
+- API keys for external services (PVWatts, Google Sunroof, SREC Trade)
 
-# Step 3: Install the necessary dependencies.
-npm i
+### Installation
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+1. Clone the repository:
+```
+git clone https://github.com/sachdevcode/solar-insight-explorer.git
+cd solar-insight-explorer
 ```
 
-**Edit a file directly in GitHub**
+2. Install dependencies:
+```
+cd backend
+npm install
+cd ../frontend
+npm install
+```
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+3. Set up environment variables:
+- Copy `.env.example` to `.env` in the backend directory
+- Fill in your database connection and API keys
 
-**Use GitHub Codespaces**
+4. Start the development servers:
+```
+# Start backend server
+cd backend
+npm run dev
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+# Start frontend server in another terminal
+cd frontend
+npm start
+```
 
-## What technologies are used for this project?
+5. The application should now be running at:
+- Backend: http://localhost:5000
+- Frontend: http://localhost:3000
 
-This project is built with:
+## API Endpoints
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+### Authentication
+- `POST /api/auth/register` - Register a new user
+- `POST /api/auth/login` - Login user
+- `GET /api/auth/profile` - Get user profile
+- `PUT /api/auth/profile` - Update user profile
 
-## How can I deploy this project?
+### Upload
+- `POST /api/upload` - Upload both proposal and utility bill
+- `POST /api/upload/proposal` - Upload only proposal
+- `POST /api/upload/utility-bill` - Upload only utility bill
 
-Simply open [Lovable](https://lovable.dev/projects/cd411791-eb91-4ac1-98be-f29a49a9eca9) and click on Share -> Publish.
+### Results
+- `GET /api/results` - Get all results for the authenticated user
+- `GET /api/results/detail/:resultId` - Get specific result by ID
+- `POST /api/results/generate` - Generate new results from existing proposal and utility bill
+- `DELETE /api/results/:resultId` - Delete a result
 
-## Can I connect a custom domain to my Lovable project?
+### Solar Data
+- `GET /api/solar-potential` - Get solar potential for a location
+- `GET /api/solar-production` - Get solar production estimates
+- `GET /api/srec-incentives` - Get SREC incentives for a location
 
-Yes it is!
+## License
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+This project is licensed under the MIT License - see the LICENSE file for details.
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+## Acknowledgments
+
+- [National Renewable Energy Laboratory (NREL)](https://www.nrel.gov/) for the PVWatts API
+- [Google Sunroof](https://sunroof.withgoogle.com/) for the solar potential API
