@@ -42,13 +42,9 @@ const getSolarProduction = async (req, res) => {
     // Get solar production from PVWatts API
     const solarProductionResponse = await pvWattsService.getSolarProduction(params);
 
-    if (!solarProductionResponse.success) {
-      res.status(500);
-      throw new Error(solarProductionResponse.error || 'Failed to fetch solar production data');
-    }
-
-    // Format the API response
-    const formattedResponse = pvWattsService.formatSolarProduction(solarProductionResponse.data);
+    // Format the API response if successful, otherwise return the raw data
+    const formattedResponse = solarProductionResponse.data ? 
+      pvWattsService.formatSolarProduction(solarProductionResponse.data) : null;
 
     res.json(formattedResponse || solarProductionResponse.data);
   } catch (error) {

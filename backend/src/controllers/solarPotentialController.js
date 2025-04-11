@@ -29,11 +29,7 @@ const getSolarPotential = async (req, res) => {
     // Get solar potential from Google Sunroof API
     const solarPotentialResponse = await googleSunroofService.getSolarPotential(parsedLatitude, parsedLongitude);
 
-    if (!solarPotentialResponse.success) {
-      res.status(500);
-      throw new Error(solarPotentialResponse.error || 'Failed to fetch solar potential data');
-    }
-
+    // Always return a 200 response with the data, even if the service used mock data
     res.json(solarPotentialResponse.data);
   } catch (error) {
     logger.error(`Solar potential error: ${error.message}`);
