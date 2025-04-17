@@ -65,6 +65,46 @@ const resultSchema = new mongoose.Schema(
         description: 'Estimated savings for the month in dollars',
       },
     }],
+    // Environmental impact data
+    environmentalImpact: {
+      carbonOffsetAnnual: {
+        type: Number,
+        description: 'Annual carbon offset in tons of CO2',
+      },
+      carbonOffsetLifetime: {
+        type: Number,
+        description: 'Lifetime carbon offset (25 years) in tons of CO2',
+      },
+      treesPlantedEquivalent: {
+        type: Number,
+        description: 'Equivalent number of trees planted',
+      },
+      milesNotDrivenEquivalent: {
+        type: Number,
+        description: 'Equivalent miles not driven in a gasoline vehicle',
+      },
+      coalNotBurnedPounds: {
+        type: Number,
+        description: 'Equivalent coal not burned in pounds',
+      },
+      carbonOffsetFactorKgPerMwh: {
+        type: Number,
+        description: 'Carbon offset factor in kg per MWh',
+      },
+      estimatedProduction: {
+        type: Number,
+        description: 'Estimated annual production in kWh',
+      },
+      dataSource: {
+        type: String,
+        enum: ['openai', 'system-calculated'],
+        description: 'Source of the environmental impact data',
+      },
+      carbonCalculationExplanation: {
+        type: String,
+        description: 'Explanation of how carbon calculations were performed',
+      },
+    },
     // Solar potential data from Google Sunroof
     solarPotential: {
       roofSegmentSummary: {

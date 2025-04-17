@@ -1,27 +1,49 @@
-
-import React from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { CalendarDays } from 'lucide-react';
+import { CalendarDays, Loader2 } from 'lucide-react';
 import type { MonthlyBreakdownItem } from '@/lib/types';
+import axios from 'axios';
+import { PROPOSAL_UPDATED_EVENT } from './ProposalAnalysis';
 
-// Mock data
-const mockMonthlyData: MonthlyBreakdownItem[] = [
-  { month: 'January', solarProduction: '1,250 kWh', gridUsage: '200 kWh', savings: '$125', newBill: '$42' },
-  { month: 'February', solarProduction: '1,345 kWh', gridUsage: '180 kWh', savings: '$135', newBill: '$40' },
-  { month: 'March', solarProduction: '1,556 kWh', gridUsage: '150 kWh', savings: '$155', newBill: '$38' },
-  { month: 'April', solarProduction: '1,723 kWh', gridUsage: '120 kWh', savings: '$172', newBill: '$36' },
-  { month: 'May', solarProduction: '1,892 kWh', gridUsage: '100 kWh', savings: '$189', newBill: '$35' },
-  { month: 'June', solarProduction: '1,956 kWh', gridUsage: '90 kWh', savings: '$195', newBill: '$32' },
-  { month: 'July', solarProduction: '1,942 kWh', gridUsage: '95 kWh', savings: '$194', newBill: '$32' },
-  { month: 'August', solarProduction: '1,875 kWh', gridUsage: '100 kWh', savings: '$187', newBill: '$33' },
-  { month: 'September', solarProduction: '1,720 kWh', gridUsage: '115 kWh', savings: '$172', newBill: '$35' },
-  { month: 'October', solarProduction: '1,532 kWh', gridUsage: '145 kWh', savings: '$153', newBill: '$37' },
-  { month: 'November', solarProduction: '1,367 kWh', gridUsage: '175 kWh', savings: '$136', newBill: '$40' },
-  { month: 'December', solarProduction: '1,304 kWh', gridUsage: '190 kWh', savings: '$130', newBill: '$41' },
-];
+// Default empty data for loading state
+const defaultData: MonthlyBreakdownItem[] = [];
 
 const MonthlyBreakdown = () => {
-  const data = mockMonthlyData;
+  const [data, setData] = useState<MonthlyBreakdownItem[]>(defaultData);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+  
+  // Function to fetch monthly breakdown data
+  const fetchMonthlyBreakdown = useCallback(async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get('/api/results/monthly-breakdown');
+      setData(response.data);
+      setError(null);
+    } catch (err) {
+      console.error('Error fetching monthly breakdown data:', err);
+      setError('Failed to load monthly breakdown data');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+  
+  // Initial data fetch and set up event listener for proposal updates
+  useEffect(() => {
+    fetchMonthlyBreakdown();
+    
+    // Add event listener for when proposal values change
+    const handleProposalUpdated = () => {
+      fetchMonthlyBreakdown();
+    };
+    
+    window.addEventListener(PROPOSAL_UPDATED_EVENT, handleProposalUpdated);
+    
+    // Clean up listener on unmount
+    return () => {
+      window.removeEventListener(PROPOSAL_UPDATED_EVENT, handleProposalUpdated);
+    };
+  }, [fetchMonthlyBreakdown]);
   
   return (
     <Card className="shadow-sm">
@@ -35,35 +57,43 @@ const MonthlyBreakdown = () => {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="overflow-x-auto">
-          <table className="w-full border-collapse min-w-[600px]">
-            <thead>
-              <tr className="bg-muted">
-                <th className="text-left p-3 font-medium">Month</th>
-                <th className="text-left p-3 font-medium">Solar Production</th>
-                <th className="text-left p-3 font-medium">Grid Usage</th>
-                <th className="text-left p-3 font-medium">Savings</th>
-                <th className="text-left p-3 font-medium">New Bill</th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.map((item, index) => (
-                <tr 
-                  key={index} 
-                  className={`border-t hover:bg-muted/50 transition-colors ${
-                    index % 2 === 0 ? 'bg-background' : 'bg-muted/30'
-                  }`}
-                >
-                  <td className="p-3 font-medium">{item.month}</td>
-                  <td className="p-3">{item.solarProduction}</td>
-                  <td className="p-3">{item.gridUsage}</td>
-                  <td className="p-3 text-solar-600 font-medium">{item.savings}</td>
-                  <td className="p-3">{item.newBill}</td>
+        {loading ? (
+          <div className="flex justify-center items-center py-8">
+            <Loader2 className="h-8 w-8 text-primary animate-spin" />
+          </div>
+        ) : error ? (
+          <div className="text-center text-red-500 py-4">{error}</div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse min-w-[600px]">
+              <thead>
+                <tr className="bg-muted">
+                  <th className="text-left p-3 font-medium">Month</th>
+                  <th className="text-left p-3 font-medium">Solar Production</th>
+                  <th className="text-left p-3 font-medium">Grid Usage</th>
+                  <th className="text-left p-3 font-medium">Savings</th>
+                  <th className="text-left p-3 font-medium">New Bill</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {data.map((item, index) => (
+                  <tr 
+                    key={index} 
+                    className={`border-t hover:bg-muted/50 transition-colors ${
+                      index % 2 === 0 ? 'bg-background' : 'bg-muted/30'
+                    }`}
+                  >
+                    <td className="p-3 font-medium">{item.month}</td>
+                    <td className="p-3">{item.solarProduction}</td>
+                    <td className="p-3">{item.gridUsage}</td>
+                    <td className="p-3 text-solar-600 font-medium">{item.savings}</td>
+                    <td className="p-3">{item.newBill}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

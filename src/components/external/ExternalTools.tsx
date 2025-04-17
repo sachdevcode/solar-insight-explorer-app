@@ -1,13 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { 
-  ExternalLink, 
-  MapPin, 
-  AreaChart, 
+import {
+  ExternalLink,
+  MapPin,
+  AreaChart,
   BadgeDollarSign,
   X,
-  Loader2 
+  Loader2
 } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import axios from 'axios';
@@ -35,6 +35,42 @@ const ExternalTools = () => {
   const [sunroofLoading, setSunroofLoading] = useState<boolean>(false);
   const [sunroofError, setSunroofError] = useState<string | null>(null);
 
+  const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
+
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setUserLocation({
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+          });
+        },
+        (error) => {
+          console.error('Error fetching location:', error);
+          setUserLocation(null);
+        }
+      );
+    } else {
+      console.error('Geolocation is not supported by this browser.');
+      setUserLocation(null);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (openDialog === 'sunroof' && navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setSunroofAddress(`${position.coords.latitude}, ${position.coords.longitude}`);
+        },
+        (error) => {
+          console.error('Error fetching location:', error);
+          setSunroofAddress('');
+        }
+      );
+    }
+  }, [openDialog]);
+
   // Function to check SREC incentives
   const checkSrecIncentives = async () => {
     if (!selectedState) {
@@ -44,7 +80,7 @@ const ExternalTools = () => {
 
     setLoading(true);
     setError(null);
-    
+
     try {
       const response = await axios.get(`/api/srec-incentives?state=${selectedState}`);
       setSrecData(response.data);
@@ -66,26 +102,26 @@ const ExternalTools = () => {
 
     setPvwattsLoading(true);
     setPvwattsError(null);
-    
+
     try {
-      // Default coordinates if zip code is not provided
-      let latitude = 40.7128; // New York City
-      let longitude = -74.0060;
-      
-      // In a real application, you would get coordinates from zip code using geocoding
-      // For now, we'll use default coordinates
-      
+      const latitude = userLocation?.latitude;
+      const longitude = userLocation?.longitude;
+
+      if (!latitude || !longitude) {
+        throw new Error('Unable to fetch user location. Please enable location services.');
+      }
+
       const params = {
         systemCapacity: pvSystemSize,
         latitude,
         longitude,
         arrayType: pvArrayType,
-        tilt: pvTilt
+        tilt: pvTilt,
       };
-      
+
       const queryString = new URLSearchParams(params as any).toString();
       const response = await axios.get(`/api/solar-production?${queryString}`);
-      
+
       setPvwattsData(response.data);
     } catch (err) {
       console.error('Error fetching PVWatts data:', err);
@@ -98,20 +134,18 @@ const ExternalTools = () => {
 
   // Function to check solar potential
   const checkSolarPotential = async () => {
-    if (!sunroofAddress) {
-      setSunroofError('Address is required');
+    if (!sunroofAddress && (!userLocation?.latitude || !userLocation?.longitude)) {
+      setSunroofError('Address or location is required');
       return;
     }
 
     setSunroofLoading(true);
     setSunroofError(null);
-    
+
     try {
-      // In a real application, you would geocode the address
-      // For now, we'll use default coordinates (New York City)
-      const latitude = 40.7128;
-      const longitude = -74.0060;
-      
+      const latitude = userLocation?.latitude || 40.7128; // Default to NYC if location is unavailable
+      const longitude = userLocation?.longitude || -74.0060;
+
       const response = await axios.get(`/api/solar-potential?latitude=${latitude}&longitude=${longitude}`);
       setSunroofData(response.data);
     } catch (err) {
@@ -151,9 +185,9 @@ const ExternalTools = () => {
                 <p className="text-sm mb-4">
                   See if your roof gets enough sunlight for solar panels and estimate potential savings.
                 </p>
-                <Button 
-                  className="w-full" 
-                  variant="outline" 
+                <Button
+                  className="w-full"
+                  variant="outline"
                   onClick={() => {
                     setOpenDialog('sunroof');
                     setSunroofData(null);
@@ -180,9 +214,9 @@ const ExternalTools = () => {
                 <p className="text-sm mb-4">
                   Calculate solar production based on your location and system specifications.
                 </p>
-                <Button 
-                  className="w-full" 
-                  variant="outline" 
+                <Button
+                  className="w-full"
+                  variant="outline"
                   onClick={() => {
                     setOpenDialog('pvwatts');
                     setPvwattsData(null);
@@ -212,9 +246,9 @@ const ExternalTools = () => {
                 <p className="text-sm mb-4">
                   Find out if Solar Renewable Energy Credits (SRECs) apply to your location.
                 </p>
-                <Button 
-                  className="w-full" 
-                  variant="outline" 
+                <Button
+                  className="w-full"
+                  variant="outline"
                   onClick={() => {
                     setOpenDialog('srec');
                     setSrecData(null);
@@ -248,14 +282,14 @@ const ExternalTools = () => {
                 Enter your address to check your roof's solar potential using Google Sunroof.
               </p>
               <div className="flex gap-2">
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   value={sunroofAddress}
                   onChange={(e) => setSunroofAddress(e.target.value)}
                   placeholder="Enter your address"
                   className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                 />
-                <Button 
+                <Button
                   onClick={checkSolarPotential}
                   disabled={sunroofLoading}
                 >
@@ -274,36 +308,36 @@ const ExternalTools = () => {
                 {sunroofError}
               </div>
             )}
-            
+
             {sunroofData && (
               <div className="space-y-4">
                 <div className="rounded-md bg-muted p-4">
                   <h4 className="font-medium mb-2">Solar Potential Results:</h4>
-                  
+
                   <div className="space-y-3">
                     <div>
                       <p className="text-sm font-medium">Maximum System Size:</p>
                       <p className="text-xl font-bold">{sunroofData.solarPotential?.maxCapacityKw.toFixed(1)} kW</p>
                     </div>
-                    
+
                     <div>
                       <p className="text-sm font-medium">Annual Production Potential:</p>
                       <p className="text-xl font-bold text-green-600">
                         {sunroofData.solarPotential?.yearlyEnergyDcKwh.toLocaleString()} kWh/year
                       </p>
                     </div>
-                    
+
                     <div>
                       <p className="text-sm font-medium">Carbon Offset Equivalent:</p>
                       <p className="text-sm">
-                        {((sunroofData.solarPotential?.yearlyEnergyDcKwh / 1000) * 
-                          (sunroofData.solarPotential?.carbonOffsetFactorKgPerMwh || 0) / 1000).toFixed(1)} 
+                        {((sunroofData.solarPotential?.yearlyEnergyDcKwh / 1000) *
+                          (sunroofData.solarPotential?.carbonOffsetFactorKgPerMwh || 0) / 1000).toFixed(1)}
                         {' '}tons CO₂ per year
                       </p>
                     </div>
                   </div>
                 </div>
-                
+
                 {sunroofData.roofSegmentStats && sunroofData.roofSegmentStats.length > 0 && (
                   <div className="rounded-md bg-muted p-4">
                     <h4 className="font-medium mb-2">Roof Segments:</h4>
@@ -312,11 +346,11 @@ const ExternalTools = () => {
                         <div key={index} className="bg-background rounded p-2">
                           <div className="flex justify-between">
                             <span>
-                              <span className="font-medium">Orientation: </span> 
-                              {segment.azimuthDegrees}° 
-                              ({segment.azimuthDegrees > 135 && segment.azimuthDegrees < 225 ? 'South' : 
-                                segment.azimuthDegrees >= 225 && segment.azimuthDegrees < 315 ? 'West' : 
-                                segment.azimuthDegrees >= 315 || segment.azimuthDegrees < 45 ? 'North' : 'East'})
+                              <span className="font-medium">Orientation: </span>
+                              {segment.azimuthDegrees}°
+                              ({segment.azimuthDegrees > 135 && segment.azimuthDegrees < 225 ? 'South' :
+                                segment.azimuthDegrees >= 225 && segment.azimuthDegrees < 315 ? 'West' :
+                                  segment.azimuthDegrees >= 315 || segment.azimuthDegrees < 45 ? 'North' : 'East'})
                             </span>
                             <span>
                               <span className="font-medium">Pitch: </span>
@@ -334,7 +368,7 @@ const ExternalTools = () => {
                 )}
               </div>
             )}
-            
+
             {!sunroofData && !sunroofLoading && !sunroofError && (
               <div className="h-[300px] bg-muted rounded-md flex items-center justify-center">
                 <p className="text-muted-foreground">Enter an address above to check solar potential</p>
@@ -360,8 +394,8 @@ const ExternalTools = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="text-sm font-medium">System Size (kW)</label>
-                <input 
-                  type="number" 
+                <input
+                  type="number"
                   value={pvSystemSize}
                   onChange={(e) => setPvSystemSize(e.target.value)}
                   className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
@@ -369,8 +403,8 @@ const ExternalTools = () => {
               </div>
               <div>
                 <label className="text-sm font-medium">Zip Code (Optional)</label>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   value={pvZipCode}
                   onChange={(e) => setPvZipCode(e.target.value)}
                   placeholder="Enter zip code"
@@ -379,7 +413,7 @@ const ExternalTools = () => {
               </div>
               <div>
                 <label className="text-sm font-medium">Array Type</label>
-                <select 
+                <select
                   value={pvArrayType}
                   onChange={(e) => setPvArrayType(e.target.value)}
                   className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
@@ -392,15 +426,15 @@ const ExternalTools = () => {
               </div>
               <div>
                 <label className="text-sm font-medium">Tilt (degrees)</label>
-                <input 
-                  type="number" 
+                <input
+                  type="number"
                   value={pvTilt}
                   onChange={(e) => setPvTilt(e.target.value)}
                   className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                 />
               </div>
             </div>
-            <Button 
+            <Button
               className="w-full"
               onClick={calculateSolarProduction}
               disabled={pvwattsLoading}
@@ -412,25 +446,25 @@ const ExternalTools = () => {
                 </>
               ) : 'Calculate Production'}
             </Button>
-            
+
             {pvwattsError && (
               <div className="rounded-md bg-destructive/10 p-4 text-destructive">
                 {pvwattsError}
               </div>
             )}
-            
+
             {pvwattsData && (
               <div className="rounded-md bg-muted p-4 space-y-4">
                 <div>
                   <p className="font-medium mb-2">Estimated Annual Production:</p>
                   <p className="text-2xl font-bold text-green-600">{pvwattsData.annualProduction.toLocaleString()} kWh</p>
                 </div>
-                
+
                 <div>
                   <p className="font-medium mb-2">Estimated Annual Savings:</p>
                   <p className="text-xl font-bold">${pvwattsData.annualSavings?.toLocaleString()}</p>
                 </div>
-                
+
                 {pvwattsData.monthlyProduction && (
                   <div>
                     <p className="font-medium mb-2">Monthly Production:</p>
@@ -445,7 +479,7 @@ const ExternalTools = () => {
                 )}
               </div>
             )}
-            
+
             {!pvwattsData && !pvwattsLoading && !pvwattsError && (
               <div className="rounded-md bg-muted p-4">
                 <p className="font-medium mb-2">Enter your system information to calculate production</p>
@@ -470,7 +504,7 @@ const ExternalTools = () => {
           </DialogHeader>
           <div className="space-y-4">
             <div className="flex gap-2">
-              <select 
+              <select
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                 value={selectedState}
                 onChange={(e) => setSelectedState(e.target.value)}
@@ -488,8 +522,8 @@ const ExternalTools = () => {
                 <option value="DE">Delaware</option>
                 <option value="TX">Texas</option>
               </select>
-              <Button 
-                onClick={checkSrecIncentives} 
+              <Button
+                onClick={checkSrecIncentives}
                 disabled={loading}
               >
                 {loading ? (
@@ -500,13 +534,13 @@ const ExternalTools = () => {
                 ) : 'Check'}
               </Button>
             </div>
-            
+
             {error && (
               <div className="rounded-md bg-destructive/10 p-4 text-destructive">
                 {error}
               </div>
             )}
-            
+
             {srecData && (
               <div className="rounded-md bg-muted p-4 space-y-4">
                 <div>
@@ -516,14 +550,14 @@ const ExternalTools = () => {
                   </div>
                   <p className="text-sm text-muted-foreground">{srecData.srec_program_details}</p>
                 </div>
-                
+
                 {srecData.srec_eligible && (
                   <>
                     <div>
                       <h4 className="font-medium mb-1">Current SREC Rate:</h4>
                       <p className="text-xl font-bold">${srecData.srec_rate} <span className="text-sm font-normal text-muted-foreground">per SREC</span></p>
                     </div>
-                    
+
                     <div>
                       <h4 className="font-medium mb-1">Estimated Annual SREC Value:</h4>
                       <p className="text-xl font-bold text-green-600">${srecData.estimated_annual_srec_value}</p>
@@ -531,7 +565,7 @@ const ExternalTools = () => {
                     </div>
                   </>
                 )}
-                
+
                 {srecData.additional_incentives && srecData.additional_incentives.length > 0 && (
                   <div>
                     <h4 className="font-medium mb-2">Additional Incentives:</h4>
@@ -549,7 +583,7 @@ const ExternalTools = () => {
                 )}
               </div>
             )}
-            
+
             {!srecData && !loading && !error && (
               <div className="rounded-md bg-muted p-4">
                 <h4 className="font-medium mb-2">SREC Program Availability:</h4>

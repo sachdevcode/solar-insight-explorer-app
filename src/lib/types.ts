@@ -1,4 +1,3 @@
-
 // File Types
 export interface ProposalFile {
   file: File;
@@ -25,11 +24,22 @@ export interface ProposalAnalysis {
   oldUtilityBill: string;
   newUtilityBill: string;
   savings: string;
+  dataSource?: string; // 'openai', 'pattern-extraction', or 'fallback-generation'
+  generatedFromError?: boolean;
 }
 
 export interface UtilityBillAnalysis {
+  utilityCompany?: string;
+  accountNumber?: string;
+  billingPeriod?: {
+    startDate: string;
+    endDate: string;
+  };
   energyUsage: string;
-  savingsBreakdown: {
+  rate?: string;
+  totalAmount?: string;
+  dataSource?: string;
+  savingsBreakdown?: {
     monthly: string;
     yearly: string;
     twentyYear: string;
@@ -42,4 +52,24 @@ export interface MonthlyBreakdownItem {
   gridUsage: string;
   savings: string;
   newBill: string;
+}
+
+export interface MonthlyBreakdownData {
+  month: string;
+  usage: number;
+  production: number;
+  netUsage: number;
+  savings: number;
+}
+
+export interface EnvironmentalImpactType {
+  carbonOffsetAnnual: number;
+  carbonOffsetLifetime: number;
+  treesPlantedEquivalent: number;
+  milesNotDrivenEquivalent: number;
+  coalNotBurnedPounds: number;
+  carbonOffsetFactorKgPerMwh: number;
+  carbonCalculationExplanation?: string;
+  estimatedProduction: number;
+  dataSource?: string;
 }

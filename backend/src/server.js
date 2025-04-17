@@ -13,6 +13,7 @@ const resultsRoutes = require('./routes/resultsRoutes');
 const solarPotentialRoutes = require('./routes/solarPotentialRoutes');
 const solarProductionRoutes = require('./routes/solarProductionRoutes');
 const srecIncentivesRoutes = require('./routes/srecIncentivesRoutes');
+const environmentalRoutes = require('./routes/environmentalRoutes');
 
 // Import middleware
 const { errorHandler } = require('./middleware/errorMiddleware');
@@ -47,6 +48,7 @@ app.use('/api/results', resultsRoutes);
 app.use('/api/solar-potential', solarPotentialRoutes);
 app.use('/api/solar-production', solarProductionRoutes);
 app.use('/api/srec-incentives', srecIncentivesRoutes);
+app.use('/api/environmental-impact', environmentalRoutes);
 
 // Root route
 app.get('/', (req, res) => {

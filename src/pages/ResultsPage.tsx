@@ -1,10 +1,10 @@
-
 import React from 'react';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import ProposalAnalysis from '@/components/results/ProposalAnalysis';
 import UtilityBillAnalysis from '@/components/results/UtilityBillAnalysis';
 import MonthlyBreakdown from '@/components/results/MonthlyBreakdown';
+import EnvironmentalImpact from '@/components/results/EnvironmentalImpact';
 import ExternalTools from '@/components/external/ExternalTools';
 import { ArrowLeft, Download, Share2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -45,6 +45,8 @@ const ResultsPage = () => {
             </div>
             
             <MonthlyBreakdown />
+            
+            <EnvironmentalImpact />
             
             <ExternalTools />
           </div>
